@@ -46,7 +46,18 @@ public class RewardService {
             int points = calculateRewardPoints(txn.getAmount());
 
             rewardsByCustomer.putIfAbsent(customerName, new HashMap<>());
-            rewardsByCustomer.get(customerName).merge(month, points, Integer::sum);
+            if (!rewardsByCustomer.containsKey(customerName)) {
+                rewardsByCustomer.put(customerName, new HashMap<>());
+            }
+
+            Map<String, Integer> customerRewards = rewardsByCustomer.get(customerName);
+
+            if (!customerRewards.containsKey(month)) {
+                customerRewards.put(month, points);
+            } else {
+                customerRewards.put(month, customerRewards.get(month) + points);
+            }
+
         }
 
         return rewardsByCustomer;
@@ -67,7 +78,13 @@ public class RewardService {
             int points = calculateRewardPoints(txn.getAmount());
 
             customerRewards.putIfAbsent(customerName, new HashMap<>());
-            customerRewards.get(customerName).merge(month, points, Integer::sum);
+            if (!customerRewards.get(customerName).containsKey(month)) {
+                customerRewards.get(customerName).put(month, points);
+            } else {
+                int existingPoints = customerRewards.get(customerName).get(month);
+                customerRewards.get(customerName).put(month, existingPoints + points);
+            }
+
         }
 
         return customerRewards;
