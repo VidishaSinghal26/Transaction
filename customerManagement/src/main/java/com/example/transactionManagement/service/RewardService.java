@@ -53,13 +53,26 @@ public class RewardService {
     }
 
 
-    public List<Transaction> getRewardByName(String customerName) {
+    public Map<String, Map<String, Integer>> getRewardByName(String customerName) {
         List<Transaction> transactions = transactionRepository.findByCustomerName(customerName);
+
         if (transactions.isEmpty()) {
             throw new CustomerNotFoundException("No transactions found for customer: " + customerName);
         }
-        return transactions;
+
+        Map<String, Map<String, Integer>> customerRewards = new HashMap<>();
+
+        for (Transaction txn : transactions) {
+            String month = txn.getTransactionDate().getMonth().toString();
+            int points = calculateRewardPoints(txn.getAmount());
+
+            customerRewards.putIfAbsent(customerName, new HashMap<>());
+            customerRewards.get(customerName).merge(month, points, Integer::sum);
+        }
+
+        return customerRewards;
     }
+
 
     public int calculateRewardPoints(double amount) {
         if (amount < 0) {
@@ -77,16 +90,7 @@ public class RewardService {
         return points;
     }
 
-    public int getTotalRewardPointsByCustomer(String customerName) {
-        List<Transaction> transactions = transactionRepository.findByCustomerName(customerName);
-        if (transactions.isEmpty()) {
-            throw new CustomerNotFoundException("No transactions found for customer: " + customerName);
-        }
-
-        return transactions.stream()
-                .mapToInt(txn -> calculateRewardPoints(txn.getAmount()))
-                .sum();
-    }
+  
 
     public Map<String, Integer> getTotalRewardsForAllCustomers() {
         List<Transaction> transactions = transactionRepository.findAll();
@@ -95,10 +99,15 @@ public class RewardService {
         }
 
         Map<String, Integer> totalRewards = new HashMap<>();
-        for (Transaction txn : transactions) {
-            String customerName = txn.getCustomerName();
-            int points = calculateRewardPoints(txn.getAmount());
-            totalRewards.merge(customerName, points, Integer::sum);
+        for (Transaction transaction : transactions) {
+            String customerName = transaction.getCustomerName();
+            int points = calculateRewardPoints(transaction.getAmount());
+            if (totalRewards.containsKey(customerName)) {
+                totalRewards.put(customerName, totalRewards.get(customerName) + points);
+            } else {
+                totalRewards.put(customerName, points);
+            }
+
         }
 
         return totalRewards;
@@ -112,25 +121,6 @@ public class RewardService {
         return transactions;
     }
 
-    public void deleteTransaction(Long transactionId) {
-        if (!transactionRepository.existsById(transactionId)) {
-            throw new InvalidTransactionException("Transaction not found with ID: " + transactionId);
-        }
-        transactionRepository.deleteById(transactionId);
-    }
-
-    public Transaction updateTransaction(Long transactionId, double newAmount, LocalDate newDate) {
-        Transaction transaction = transactionRepository.findById(transactionId)
-                .orElseThrow(() -> new InvalidTransactionException("Transaction not found with ID: " + transactionId));
-
-        if (newAmount <= 0) {
-            throw new InvalidTransactionException("Transaction amount cannot be zero or negative.");
-        }
-
-        transaction.setAmount(newAmount);
-        transaction.setTransactionDate(newDate);
-
-        return transactionRepository.save(transaction);
-    }
+  
 }
 

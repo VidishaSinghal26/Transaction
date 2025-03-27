@@ -99,30 +99,6 @@ public class RewardServiceTest {
 
         assertEquals("No transactions found in the last 3 months.", exception.getMessage());
     }
-
-    
-    @Test
-    public void testGetTotalRewardPointsByCustomer() {
-        List<Transaction> transactions = List.of(new Transaction(1L, "Bob", 200.0, LocalDate.now()));
-
-        when(transactionRepository.findByCustomerName("Bob")).thenReturn(transactions);
-
-        int totalPoints = rewardService.getTotalRewardPointsByCustomer("Bob");
-        assertEquals(250, totalPoints);
-    }
-
-    
-    @Test
-    public void testGetTotalRewardPointsByCustomer_NotFound() {
-        when(transactionRepository.findByCustomerName("Bob")).thenReturn(Collections.emptyList());
-
-        CustomerNotFoundException exception = assertThrows(CustomerNotFoundException.class, () -> {
-            rewardService.getTotalRewardPointsByCustomer("Bob");
-        });
-
-        assertEquals("No transactions found for customer: Bob", exception.getMessage());
-    }
-
     
     @Test
     public void testGetTotalRewardsForAllCustomers() {
@@ -151,49 +127,5 @@ public class RewardServiceTest {
     }
 
     
-    @Test
-    public void testDeleteTransaction() {
-        when(transactionRepository.existsById(1L)).thenReturn(true);
-        doNothing().when(transactionRepository).deleteById(1L);
-
-        assertDoesNotThrow(() -> rewardService.deleteTransaction(1L));
-    }
-
    
-    @Test
-    public void testDeleteTransaction_NotFound() {
-        when(transactionRepository.existsById(1L)).thenReturn(false);
-
-        InvalidTransactionException exception = assertThrows(InvalidTransactionException.class, () -> {
-            rewardService.deleteTransaction(1L);
-        });
-
-        assertEquals("Transaction not found with ID: 1", exception.getMessage());
-    }
-
-    
-    @Test
-    public void testUpdateTransaction_Success() {
-        Transaction existingTransaction = new Transaction(1L, "Alice", 100.0, LocalDate.now());
-        Transaction updatedTransaction = new Transaction(1L, "Alice", 150.0, LocalDate.now().minusDays(1));
-
-        when(transactionRepository.findById(1L)).thenReturn(Optional.of(existingTransaction));
-        when(transactionRepository.save(any(Transaction.class))).thenReturn(updatedTransaction);
-
-        Transaction result = rewardService.updateTransaction(1L, 150.0, LocalDate.now().minusDays(1));
-        assertNotNull(result);
-        assertEquals(150.0, result.getAmount());
-    }
-
-    
-    @Test
-    public void testUpdateTransaction_NotFound() {
-        when(transactionRepository.findById(1L)).thenReturn(Optional.empty());
-
-        InvalidTransactionException exception = assertThrows(InvalidTransactionException.class, () -> {
-            rewardService.updateTransaction(1L, 150.0, LocalDate.now());
-        });
-
-        assertEquals("Transaction not found with ID: 1", exception.getMessage());
-    }
 }

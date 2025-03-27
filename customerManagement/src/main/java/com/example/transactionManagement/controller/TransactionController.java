@@ -32,14 +32,8 @@ public class TransactionController {
     }
 
     @GetMapping("/getRewardsByCustomer/{customerName}")
-    public List<Transaction> getRewardByName(@PathVariable String customerName) {
+    public Map<String, Map<String, Integer>> getRewardByName(@PathVariable String customerName) {
         return rewardService.getRewardByName(customerName);
-    }
-
-
-    @GetMapping("/totalRewardsByCustomer/{customerName}")
-    public int getTotalRewardsByCustomer(@PathVariable String customerName) {
-        return rewardService.getTotalRewardPointsByCustomer(customerName);
     }
 
  
@@ -55,14 +49,4 @@ public class TransactionController {
     }
 
 
-    @PostMapping("/deleteTransaction/{id}")
-    public void deleteTransaction(@PathVariable Long id) {
-        rewardService.deleteTransaction(id);
-    }
-
- 
-    @PostMapping("/updateTransaction/{id}")
-    public Transaction updateTransaction(@PathVariable Long id, @RequestBody Transaction newTransaction) {
-        return rewardService.updateTransaction(id, newTransaction.getAmount(), newTransaction.getTransactionDate());
-    }
 }
